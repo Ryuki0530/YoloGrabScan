@@ -3,10 +3,10 @@ import numpy as np
 from ultralytics import YOLO
 
 # YOLOモデルの読み込み
-model = YOLO("yolov8m")  # 学習済みモデルのパスを指定
+model = YOLO("yolov8x")  # 学習済みモデルのパスを指定
 
 # IPカメラのURL
-ip_camera_url = "http://133.14.189.95:4747/video"
+ip_camera_url = 1
 
 # 動きの追跡用
 def calculate_movement(positions, new_position):
@@ -17,18 +17,18 @@ def calculate_movement(positions, new_position):
         return np.array(positions[1]) - np.array(positions[0])
     return np.array([0, 0])
 
-# メイン処理
+
 cap = cv2.VideoCapture(ip_camera_url)
 
-hand_positions = []  # 手の座標履歴
-object_positions = []  # 物体の座標履歴
+hand_positions = []  
+object_positions = []  
 
 while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
         break
 
-    # YOLOによる物体検出
+    
     results = model(frame)
     detections = results[0].boxes.data.cpu().numpy()
 
@@ -40,8 +40,8 @@ while cap.isOpened():
         x1, y1, x2, y2, conf, class_id = detection
         if class_id == 0:  # 手のクラスID
             hands.append([(x1 + x2) / 2, (y1 + y2) / 2])  # 手の中心座標
-        elif class_id == 64:  # 特定の物体のクラスID
-            objects.append([(x1 + x2) / 2, (y1 + y2) / 2])  # 物体の中心座標
+        elif class_id == 39:  # 特定の物体のクラスID
+            objects.append( [(x1 + x2) / 2, (y1 + y2) / 2])  # 物体の中心座標
 
     # 動きを計算
     for hand in hands:

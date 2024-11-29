@@ -1,31 +1,31 @@
 import cv2
 import tkinter as gui
+import numpy as np
 
 
 def main():
     selectedModel = selectModel()
-    print(selectedModel + "を使用します。")
+    print("model:"+selectedModel)
     cam = connCam()
 
     if cam is None or not cam.isOpened():
-        print("カメラの接続に失敗しました。")
+        print("Camera connection failed")
+        gui.messagebox.showerror('エラー','カメラの接続に失敗しました。') 
         return
 
-    # 映像を表示
-    while True:
+    handPosition = []
+    objectPosition = []
+
+    #MainLoop
+    while cam.isOpened():
         ret, frame = cam.read()
         if not ret:
-            print("フレームの取得に失敗しました。")
             break
-
-        cv2.imshow("Camera Feed", frame)
-
-        # 27はESCキー
-        if cv2.waitKey(1) & 0xFF == 27:
+        
+        cv2.imshow("Frame", frame)
+        
+        if cv2.waitKey(1) & 0xFF == 27:#27はESCキー
             break
-
-    cam.release()
-    cv2.destroyAllWindows()
 
 
 def selectModel():
@@ -75,6 +75,7 @@ def connCam():
     window1.mainloop()
 
     if result1 == "OnDeviceCamera":
+        print("Camera:On This Device Camera")
         return cv2.VideoCapture(0)
 
     result2 = None
@@ -99,10 +100,18 @@ def connCam():
     window2.mainloop()
 
     if result2:
+        print("Camera:IPcam ["+result2+"]")
         return cv2.VideoCapture(result2)
 
     return None
 
+def calculateMovement(positions,newPositions):
+    positions.append(newPositions)
+    if len(positions) > 2:
+        positions.pop(0)
+    if len(positions) == 2:
+        return np.array(positions[1]) - np.array(positions[0])
+    return np.array([0, 0])
 
 if __name__ == "__main__":
     main()
