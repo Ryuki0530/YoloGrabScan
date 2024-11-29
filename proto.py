@@ -3,10 +3,10 @@ import numpy as np
 from ultralytics import YOLO
 
 # YOLOモデルの読み込み
-model = YOLO("yolo11m")  # 学習済みモデルのパスを指定
+model = YOLO("yolov8m")  # 学習済みモデルのパスを指定
 
 # IPカメラのURL
-ip_camera_url = "http://192.168.0.205:4747/video"
+ip_camera_url = "http://133.14.189.95:4747/video"
 
 # 動きの追跡用
 def calculate_movement(positions, new_position):
