@@ -20,8 +20,8 @@ def main():
 
         cv2.imshow("Camera Feed", frame)
 
-        # 'q'キーで終了
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        # 27はESCキー
+        if cv2.waitKey(1) & 0xFF == 27:
             break
 
     cam.release()
