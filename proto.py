@@ -1,12 +1,16 @@
 import cv2
 import numpy as np
-from ultralytics import YOLO
+from ultralytics import YOLO  # type: ignore
 
 # YOLOモデルの読み込み
 model = YOLO("yolov8x")  # 学習済みモデルのパスを指定
 
 # IPカメラのURL
-ip_camera_url = 1
+ip_camera_url = 0
+
+# 検出対象のクラスID
+HAND_CLASS_ID = 0  # 手のクラスID
+TARGET_CLASS_IDS = [39, 40, 41]  # 物体のクラスIDを配列で登録（例: 39, 40, 41）
 
 # 動きの追跡用
 def calculate_movement(positions, new_position):
@@ -20,15 +24,14 @@ def calculate_movement(positions, new_position):
 
 cap = cv2.VideoCapture(ip_camera_url)
 
-hand_positions = []  
-object_positions = []  
+hand_positions = []
+object_positions = []
 
 while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
         break
 
-    
     results = model(frame)
     detections = results[0].boxes.data.cpu().numpy()
 
@@ -38,12 +41,16 @@ while cap.isOpened():
     # 検出された物体を分類
     for detection in detections:
         x1, y1, x2, y2, conf, class_id = detection
-        if class_id == 0:  # 手のクラスID
-            hands.append([(x1 + x2) / 2, (y1 + y2) / 2])  # 手の中心座標
-        elif class_id == 39:  # 特定の物体のクラスID
-            objects.append( [(x1 + x2) / 2, (y1 + y2) / 2])  # 物体の中心座標
+        center = [(x1 + x2) / 2, (y1 + y2) / 2]
+        if class_id == HAND_CLASS_ID:  # 手のクラスID
+            hands.append(center)
+        elif class_id in TARGET_CLASS_IDS:  # 登録された物体のクラスID
+            objects.append(center)
 
     # 動きを計算
+    hand_movement = np.array([0, 0])
+    object_movement = np.array([0, 0])
+    
     for hand in hands:
         hand_movement = calculate_movement(hand_positions, hand)
     for obj in objects:

@@ -1,11 +1,15 @@
 import cv2
 import tkinter as gui
 import numpy as np
+from ultralytics import YOLO
 
+HAND_CLASS_ID = 0  # 手のクラスID
+TARGET_CLASS_IDS = [39, 40, 41]
 
 def main():
     selectedModel = selectModel()
     print("model:"+selectedModel)
+    model = YOLO(selectedModel)
     cam = connCam()
 
     if cam is None or not cam.isOpened():
@@ -16,12 +20,14 @@ def main():
     handPosition = []
     objectPosition = []
 
-    #MainLoop
+    #MainLoopv
     while cam.isOpened():
         ret, frame = cam.read()
         if not ret:
             break
         
+        results = model(frame)
+
         cv2.imshow("Frame", frame)
         
         if cv2.waitKey(1) & 0xFF == 27:#27はESCキー
