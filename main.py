@@ -3,8 +3,10 @@ import tkinter as gui
 import numpy as np
 from ultralytics import YOLO
 
+ON_DEVICE_CAMARA_ID = 1
 HAND_CLASS_ID = 0  # 手のクラスID
-TARGET_CLASS_IDS = [39, 40, 41]
+TARGET_CLASS_IDS = [28, 29, 32 ,39 ,40 ,41 ,42 ,43 ,44 ,45 ,46 ,47 ,48 ,49 ,54 ,64 ,67 ,73 ,79 ]
+THRESHOLD = 5
 
 def main():
     selectedModel = selectModel()
@@ -18,15 +20,54 @@ def main():
         return
 
     handPosition = []
-    objectPosition = []
+    objPosition = []
 
-    #MainLoopv
+    #MainLoop
     while cam.isOpened():
         ret, frame = cam.read()
         if not ret:
             break
         
-        results = model(frame)
+        
+        #Yoloによる推論実行
+        resultsTensor = model(frame)
+        #テンソルをNumPy配列に変換
+        results = resultsTensor[0].boxes.data.cpu().numpy()
+        
+        hand = []
+        objs = []
+
+        #検出された物体の分類と中心の算出
+        for result in results:
+            x1,y1,x2,y2,conf,classId = result
+            center = [(x1+x2)/2,(y1+y2)/2]
+            if classId == HAND_CLASS_ID:
+                hand.append(center)
+            elif classId in TARGET_CLASS_IDS:
+                objs.append(center)
+
+        #動きの算出
+        handMove = np.array([0,0])
+        objMove = np.array([0,0])
+        
+        for handf in hand:
+            handMove = calculateMovement(handPosition,handf)
+        for obj in objs:
+            objMove = calculateMovement(objPosition,obj)
+
+        holding = False
+        if len(hand)> 0 and len(objs) >0:
+            if np.linalg.norm(handMove - objMove) < THRESHOLD:
+                holding = True
+
+        #結果を表示
+        for handf in hand:
+            cv2.circle(frame,(int(handf[0]), int(handf[1])),5,(255,0,0),-1)
+        for obj in objs:
+            cv2.circle(frame, (int(obj[0]),int(obj[1])),5,(0,225,0),-1)
+        if holding:
+            cv2.putText(frame, "Holding Object",(50,50),cv2.FONT_HERSHEY_COMPLEX,1,(0,0,255),2)       
+
 
         cv2.imshow("Frame", frame)
         
@@ -82,7 +123,7 @@ def connCam():
 
     if result1 == "OnDeviceCamera":
         print("Camera:On This Device Camera")
-        return cv2.VideoCapture(0)
+        return cv2.VideoCapture(ON_DEVICE_CAMARA_ID)
 
     result2 = None
     window2 = gui.Tk()
