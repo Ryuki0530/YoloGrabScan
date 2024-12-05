@@ -5,10 +5,13 @@ from ultralytics import YOLO
 
 ON_DEVICE_CAMARA_ID = 1
 HAND_CLASS_ID = 0  # 手のクラスID
-TARGET_CLASS_IDS = [28, 29, 32 ,39 ,40 ,41 ,42 ,43 ,44 ,45 ,46 ,47 ,48 ,49 ,54 ,64 ,67 ,73 ,79 ]
-THRESHOLD = 5
+# TARGET_CLASS_IDS = [28, 29, 32 ,39 ,40 ,41 ,42 ,43 ,44 ,45 ,46 ,47 ,48 ,49 ,54 ,64 ,67 ,73 ,79 ]
+TARGET_CLASS_IDS = [39]
+DISTANCE_THRESHOLD = 100  # 距離のしきい値
+MOVEMENT_THRESHOLD = 10   # 動きの類似性のしきい値
 
 def main():
+    print("Start main function")
     selectedModel = selectModel()
     print("model:"+selectedModel)
     model = YOLO(selectedModel)
@@ -48,31 +51,43 @@ def main():
 
         #動きの算出
         handMove = np.array([0,0])
-        objMove = np.array([0,0])
+        objMoves = []
         
         for handf in hand:
             handMove = calculateMovement(handPosition,handf)
         for obj in objs:
             objMove = calculateMovement(objPosition,obj)
+            objMoves.append(objMove)
+
 
         holding = False
-        if len(hand)> 0 and len(objs) >0:
-            if np.linalg.norm(handMove - objMove) < THRESHOLD:
-                holding = True
+        for handf, hMove in zip(hand,[handMove]):
+            for obj, oMove in zip(objs, objMoves):
+                #状態算出
+                distance = np.linalg.norm(np.array(handf) - np.array(obj))
+                movementSimilarity = np.linalg.norm(hMove -oMove)
 
+                #判定
+                if distance < DISTANCE_THRESHOLD and movementSimilarity < MOVEMENT_THRESHOLD:
+                    holding = True
+                    break
+
+       
         #結果を表示
         for handf in hand:
             cv2.circle(frame,(int(handf[0]), int(handf[1])),5,(255,0,0),-1)
         for obj in objs:
             cv2.circle(frame, (int(obj[0]),int(obj[1])),5,(0,225,0),-1)
         if holding:
-            cv2.putText(frame, "Holding Object",(50,50),cv2.FONT_HERSHEY_COMPLEX,1,(0,0,255),2)       
+            cv2.putText(frame, "Holding Object",(100,100),cv2.FONT_HERSHEY_COMPLEX,1,(0,0,255),2)       
 
 
         cv2.imshow("Frame", frame)
         
         if cv2.waitKey(1) & 0xFF == 27:#27はESCキー
             break
+
+
 
 
 def selectModel():
@@ -160,5 +175,7 @@ def calculateMovement(positions,newPositions):
         return np.array(positions[1]) - np.array(positions[0])
     return np.array([0, 0])
 
+
+print("Set uped sub functions.")
 if __name__ == "__main__":
     main()
