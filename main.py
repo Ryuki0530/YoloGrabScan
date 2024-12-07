@@ -7,10 +7,10 @@ ON_DEVICE_CAMARA_ID = 1
 HAND_CLASS_ID = 0  # 手のクラスID
 # TARGET_CLASS_IDS = [28, 29, 32 ,39 ,40 ,41 ,42 ,43 ,44 ,45 ,46 ,47 ,48 ,49 ,54 ,64 ,67 ,73 ,79 ]
 TARGET_CLASS_IDS = [39]
-DISTANCE_THRESHOLD = 100  # 距離のしきい値
-MOVEMENT_THRESHOLD = 10   # 動きの類似性のしきい値
+DISTANCE_THRESHOLD = 150  # 距離のしきい値
+MOVEMENT_THRESHOLD = 5   # 動きの類似性のしきい値
 
-def main():
+def main(): 
     print("Start main function")
     selectedModel = selectModel()
     print("model:"+selectedModel)
@@ -82,7 +82,7 @@ def main():
             cv2.putText(frame, "Holding Object",(100,100),cv2.FONT_HERSHEY_COMPLEX,1,(0,0,255),2)       
 
 
-        cv2.imshow("Frame", frame)
+        cv2.imshow("Yolo Grab", frame)
         
         if cv2.waitKey(1) & 0xFF == 27:#27はESCキー
             break
@@ -97,7 +97,7 @@ def selectModel():
     window.geometry("300x200")
 
     selectedModel = gui.StringVar(value="yolov8m")
-    options = ["yolov8n", "yolov8m", "yolov8l", "yolo11m"]
+    options = ["yolov8n","yoloV8n", "yolov8m", "yolov8l", "yolo11m"]
 
     for option in options:
         gui.Radiobutton(window, text=option, value=option, variable=selectedModel).pack(anchor=gui.W)
